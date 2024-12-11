@@ -1,38 +1,12 @@
 <?php
+include('include/db.php');
 
-// Database connection
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "your_database";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Function to register a user
-if (isset($_POST['register'])) {
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-
-    // Check if email already exists
-    $checkEmail = "SELECT * FROM users WHERE email = '$email'";
-    $result = $conn->query($checkEmail);
-
-    if ($result->num_rows > 0) {
-        echo "Email is already registered.";
-    } else {
-        $sql = "INSERT INTO users (username, email, password) VALUES ('$username', '$email', '$password')";
-
-        if ($conn->query($sql) === TRUE) {
-            echo "Registration successful.";
-        } else {
-            echo "Error: " . $conn->error;
-        }
-    }
+// Display alert message from session, if exists
+session_start();
+if (isset($_SESSION['message'])) {
+    $message = $_SESSION['message'];
+    $messageType = $_SESSION['messageType'];
+    unset($_SESSION['message'], $_SESSION['messageType']);
 }
 
 // Function to log in a user
@@ -40,23 +14,34 @@ if (isset($_POST['login'])) {
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = $_POST['password'];
 
-    $sql = "SELECT * FROM users WHERE email = '$email'";
-    $result = $conn->query($sql);
-
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
-
-        if (password_verify($password, $user['password'])) {
-            echo "Login successful. Welcome, " . $user['username'] . "!";
-            // Start session and set session variables if needed
-            session_start();
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-        } else {
-            echo "Invalid password.";
-        }
+    // Validation
+    if (empty($email)) {
+        $message = "Email cannot be empty.";
+        $messageType = "danger";
+    } elseif (empty($password)) {
+        $message = "Password cannot be empty.";
+        $messageType = "danger";
     } else {
-        echo "No account found with that email.";
+        $sql = "SELECT * FROM users WHERE email = '$email'";
+        $result = $conn->query($sql);
+
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+
+            if (password_verify($password, $user['password'])) {
+                session_start();
+                $messageType = "success";
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['email'] = $user['email'];
+                header("Location: admin/dashboard.php");
+            } else {
+                $message = "Invalid password.";
+                $messageType = "danger";
+            }
+        } else {
+            $message = "No account found with that email.";
+            $messageType = "danger";
+        }
     }
 }
 
@@ -69,7 +54,7 @@ $conn->close();
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap demo</title>
+    <title>Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   </head>
   <body>
@@ -77,11 +62,16 @@ $conn->close();
     <div class="container mt-5">
         <div class="row">
             <div class="col-lg-6 mx-auto">
+            <?php if (!empty($message)): ?>
+                <div class="alert alert-<?= $messageType ?>" role="alert">
+                    <?= $message ?>
+                </div>
+            <?php endif; ?>
                 <div class="card">
                     <div class="card-body p-4">
                         <h2>Login</h2>
                         <p>Enter your email and password for login.</p>
-                        <form action="#">
+                        <form method="post" action="#">
                             <div class="form-group">
                                 <label class="form-label" for="email">Email 
                                     <span class="text-danger">*</span>
@@ -97,7 +87,7 @@ $conn->close();
                             <button type="submit" name="login" class="btn btn-primary btn-lg w-100 mt-4">Login</button>
                             <div class="mt-4 text-center">
                                 <p>
-                                    Don't have an Account? <a href="register.html" class="fw-semibold">Register</a>
+                                    Don't have an Account? <a href="register.php" class="fw-semibold">Register</a>
                                 </p>
                             </div>
                         </form>

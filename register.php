@@ -1,3 +1,41 @@
+<?php
+include('include/db.php');
+
+// success or danger message
+$message = "";
+$messageType = ""; 
+
+// Function to register a user
+if (isset($_POST['register'])) {
+    $fullname = mysqli_real_escape_string($conn, $_POST['fullname']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+
+    // Check if email already exists
+    $checkEmail = "SELECT * FROM users WHERE email = '$email'";
+    $result = $conn->query($checkEmail);
+
+    if ($result->num_rows > 0) {
+        $message = "Email is already registered.";
+        $messageType = "danger";
+    } else {
+        $sql = "INSERT INTO users (fullname, email, password) VALUES ('$fullname', '$email', '$password')";
+
+        if ($conn->query($sql) === TRUE) {
+            session_start();
+            $_SESSION['message'] = "Registration successful. Please login.";
+            $_SESSION['messageType'] = "success";
+            header("Location: login.php");
+            exit;
+        } else {
+            $message = "Error: " . $conn->error;
+            $messageType = "danger";
+        }
+    }
+}
+
+?>
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -11,33 +49,38 @@
     <div class="container mt-5">
         <div class="row">
             <div class="col-lg-6 mx-auto">
+                <?php if (!empty($message)): ?>
+                    <div class="alert alert-<?= $messageType ?>" role="alert">
+                        <?= $message ?>
+                    </div>
+                <?php endif; ?>
                 <div class="card">
                     <div class="card-body p-4">
                         <h2>Create Account</h2>
                         <p>Enter your details.</p>
-                        <form action="#">
+                        <form method="post" action="#">
                             <div class="form-group">
                                 <label class="form-label" for="fullname">Full Name 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control" name="fullname" placeholder="Enter your fullname">
+                                <input type="text" class="form-control form-control-lg" name="fullname" placeholder="Enter your fullname">
                             </div>
                             <div class="form-group mt-3">
                                 <label class="form-label" for="email">Email 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="email" class="form-control" name="email" placeholder="Email">
+                                <input type="email" class="form-control form-control-lg" name="email" placeholder="Email">
                             </div>
                             <div class="form-group mt-3">
                                 <label class="form-label" for="password">Password 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" class="form-control" name="password" placeholder="Password">
+                                <input type="password" class="form-control form-control-lg" name="password" placeholder="Password">
                             </div>
                             <button type="submit" name="register" class="btn btn-primary w-100 mt-4">Register</button>
                             <div class="mt-4 text-center">
                                 <p>
-                                    Already have an Account? <a href="login.html" class="fw-semibold">Login</a>
+                                    Already have an Account? <a href="login.php" class="fw-semibold">Login</a>
                                 </p>
                             </div>
                         </form>
