@@ -55,22 +55,33 @@ $serialNumber = 1;
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <th scope="row">1</th>
-                            <td>Post title</td>
-                            <td>
-                                <img src="" alt="">
-                            </td>
-                            <td>5th Dec 2024</td>
-                            <td>
-                                <a href="edit-post.php" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="" class="btn btn-danger btn-sm">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            </td>
-                          </tr>
+                        <?php if ($result && $result->num_rows > 0): ?>
+                          <?php while ($row = $result->fetch_assoc()): ?>
+                            <tr>
+                              <th scope="row"><?= $serialNumber++ ?></th>
+                              <td><?= $row['title'] ?></td>
+                              <td>
+                                  <img src="uploads/post/<?= $row['image'] ?>" alt="" width="50px">
+                              </td>
+                              <td><?= $row['status'] == 1 ? 'Publish' : 'Draft' ?></td>
+                              <td>
+                              <?= date("Y-m-d H:i", strtotime($row['created_at'])) ?>
+                              </td>
+                              <td>
+                                  <a href="edit-post.php?id=<?= $row['id'] ?>" class="btn btn-primary btn-sm">
+                                      <i class="bi bi-pencil"></i>
+                                  </a>
+                                  <a href="delete-post.php?id=<?= $row['id'] ?>" class="btn btn-danger btn-sm">
+                                      <i class="bi bi-trash"></i>
+                                  </a>
+                              </td>
+                            </tr>
+                          <?php endwhile; ?>
+                          <?php else: ?>
+                              <tr>
+                                  <td colspan="5" class="text-center">No posts found.</td>
+                              </tr>
+                          <?php endif; ?>
                         </tbody>
                       </table>
                   </div>

@@ -2,6 +2,11 @@
 include('../include/db.php');
 
 session_start();
+
+// success or danger message
+$message = "";
+$messageType = ""; 
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php"); // Redirect to login
     exit;
