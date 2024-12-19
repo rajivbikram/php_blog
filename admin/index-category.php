@@ -1,3 +1,26 @@
+<?php
+include('../include/db.php');
+
+session_start();
+if (!isset($_SESSION['user_id'])) {
+  header("Location: ../login.php"); // Redirect to login
+  exit;
+}
+
+if (isset($_SESSION['message'])) {
+  $message = $_SESSION['message'];
+  $messageType = $_SESSION['messageType'];
+  unset($_SESSION['message'], $_SESSION['messageType']);
+}
+
+
+$sql = "SELECT * FROM categories ORDER BY id DESC";
+$result = $conn->query($sql);
+$serialNumber = 1;
+
+?>
+
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -21,8 +44,13 @@
                         <i class="bi bi-plus"></i> Add New
                     </a>
                 </div>
+                <?php if (!empty($message)): ?>
+                    <div class="mt-4 alert alert-<?= $messageType ?>" role="alert">
+                        <?= $message ?>
+                    </div>
+                <?php endif; ?>
                 <div class="table-responsive mt-4">
-                    <table class="table table-bordered">
+                    <table class="table table-striped table-bordered">
                         <thead>
                           <tr>
                             <th scope="col">S.N</th>
@@ -32,36 +60,29 @@
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <th scope="row">1</th>
-                            <td>Technology</td>
-                            <td>
-                                <img src="" alt="">
-                            </td>
-                            <td>
-                                <a href="edit-category.php" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="" class="btn btn-danger btn-sm">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            </td>
-                          </tr>
-                          <tr>
-                            <th scope="row">1</th>
-                            <td>Science</td>
-                            <td>
-                                <img src="" alt="">
-                            </td>
-                            <td>
-                                <a href="edit-category.php" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="" class="btn btn-danger btn-sm">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            </td>
-                          </tr>
+                        <?php if ($result && $result->num_rows > 0): ?>
+                          <?php while ($row = $result->fetch_assoc()): ?>
+                            <tr>
+                              <th scope="row"><?= $serialNumber++ ?></th>
+                              <td><?= $row['name'] ?></td>
+                              <td>
+                                  <img src="uploads/category/<?= $row['image'] ?>" alt="" width="50px">
+                              </td>
+                              <td>
+                                  <a href="edit-category.php?id=<?= $row['id'] ?>" class="btn btn-primary btn-sm">
+                                      <i class="bi bi-pencil"></i>
+                                  </a>
+                                  <a href="delete-category.php?id=<?= $row['id'] ?>" class="btn btn-danger btn-sm">
+                                      <i class="bi bi-trash"></i>
+                                  </a>
+                              </td>
+                            </tr>
+                          <?php endwhile; ?>
+                          <?php else: ?>
+                              <tr>
+                                  <td colspan="5" class="text-center">No categories found.</td>
+                              </tr>
+                          <?php endif; ?>
                         </tbody>
                       </table>
                   </div>

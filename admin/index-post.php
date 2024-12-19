@@ -1,3 +1,25 @@
+<?php
+include('../include/db.php');
+
+session_start();
+if (!isset($_SESSION['user_id'])) {
+  header("Location: ../login.php"); // Redirect to login
+  exit;
+}
+
+if (isset($_SESSION['message'])) {
+  $message = $_SESSION['message'];
+  $messageType = $_SESSION['messageType'];
+  unset($_SESSION['message'], $_SESSION['messageType']);
+}
+
+
+$sql = "SELECT * FROM posts ORDER BY created_at DESC";
+$result = $conn->query($sql);
+$serialNumber = 1;
+
+?>
+
 <!doctype html>
 <html lang="en">
   <head>

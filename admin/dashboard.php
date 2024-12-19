@@ -1,4 +1,6 @@
 <?php 
+include('include/db.php');
+
 session_start();
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login/register page

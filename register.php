@@ -9,29 +9,44 @@ $messageType = "";
 if (isset($_POST['register'])) {
     $fullname = mysqli_real_escape_string($conn, $_POST['fullname']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
 
-    // Check if email already exists
-    $checkEmail = "SELECT * FROM users WHERE email = '$email'";
-    $result = $conn->query($checkEmail);
+    if(empty($fullname)){
+        $message="Fullname can not be empty.";
+        $messageType="danger";
+    }elseif(empty($email)){
+        $message="Email can not be empty.";
+        $messageType="danger";
+    }elseif(empty($password)){
+        $message="Password can not be empty.";
+        $messageType="danger";
+    }else{
 
-    if ($result->num_rows > 0) {
-        $message = "Email is already registered.";
-        $messageType = "danger";
-    } else {
-        $sql = "INSERT INTO users (fullname, email, password) VALUES ('$fullname', '$email', '$password')";
+        // Bcrypt Password
+        $password = password_hash($password, PASSWORD_BCRYPT);
 
-        if ($conn->query($sql) === TRUE) {
-            session_start();
-            $_SESSION['message'] = "Registration successful. Please login.";
-            $_SESSION['messageType'] = "success";
-            header("Location: login.php");
-            exit;
-        } else {
-            $message = "Error: " . $conn->error;
+        // Check if email already exists
+        $checkEmail = "SELECT * FROM users WHERE email = '$email'";
+        $result = $conn->query($checkEmail);
+
+        if ($result->num_rows > 0) {
+            $message = "Email is already registered.";
             $messageType = "danger";
+        } else {
+            $sql = "INSERT INTO users (fullname, email, password) VALUES ('$fullname', '$email', '$password')";
+
+            if ($conn->query($sql) === TRUE) {
+                session_start();
+                $_SESSION['message'] = "Registration successful. Please login.";
+                $_SESSION['messageType'] = "success";
+                header("Location: login.php");
+                exit;
+            } else {
+                $message = "Error: " . $conn->error;
+                $messageType = "danger";
+            }
         }
-    }
+    }    
 }
 
 ?>
