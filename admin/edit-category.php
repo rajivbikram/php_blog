@@ -1,3 +1,70 @@
+<?php
+include('../include/db.php');
+
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login.php"); // Redirect to login
+    exit;
+}
+
+// Get category data for edit
+if (isset($_GET['id'])) {
+    $id = intval($_GET['id']);
+    $sql = "SELECT * FROM categories WHERE id = $id";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows === 1) {
+        $category = $result->fetch_assoc();
+    } else {
+        $_SESSION['message'] = "Category not found.";
+        $_SESSION['messageType'] = "danger";
+        header("Location: index-category.php");
+        exit;
+    }
+}
+
+if (isset($_POST['update'])) {
+    $id = intval($_POST['id']);
+    $name = mysqli_real_escape_string($conn, $_POST['category_name']);
+    $details = mysqli_real_escape_string($conn, $_POST['category_details']);
+    $categoryImage = $_FILES['category_image'];
+
+    // Handle image upload if a new one is provided
+    if (!empty($categoryImage['name'])) {
+        $imageName = time() . "_" . basename($categoryImage['name']);
+        $target_dir = "uploads/category/";
+        $target_file = $target_dir . $imageName;
+
+        // Check if image upload is successful
+        if (move_uploaded_file($categoryImage['tmp_name'], $target_file)) {
+            
+            // Remove the old image if it exists
+            if (file_exists($target_dir . $category['image'])) {
+                unlink($target_dir . $category['image']);
+            }
+
+            // Update category details
+            $sql = "UPDATE categories SET name = '$name', details = '$details', image = '$imageName' WHERE id = $id";
+
+            if ($conn->query($sql) === TRUE) {
+                $_SESSION['message'] = "Category updated successfully.";
+                $_SESSION['messageType'] = "success";
+                header("Location: index-category.php");
+                exit;
+            } else {
+                $message = "Error updating category: " . $conn->error;
+                $messageType = "danger";
+            }
+        } else {
+            $message = "Error uploading image.";
+            $messageType = "danger";
+        }
+    }
+}
+
+$conn->close();
+?>
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -29,29 +96,34 @@
                 <div class="mt-4">
                     <div class="card">
                         <div class="card-body">
-                            <form action="">
+                        <form method="post" action="#" enctype="multipart/form-data">
+                            <input name="id" type="hidden" value="<?= $category['id']?>">
                                 <div class="form-group">
-                                    <label class="form-label">Category Name 
+                                    <label class="form-label">Name 
                                         <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text" class="form-control" name="title" placeholder="Category Name">
+                                    <input type="text" class="form-control" 
+                                    value="<?= $category['name'] ?>" name="category_name" placeholder="Category Name">
                                 </div>
                                 <div class="row">
                                     <div class="form-group col-md-6 mt-3">
-                                        <label class="form-label">Category Image 
+                                        <label class="form-label"> Image 
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <input type="file" class="form-control" name="title">
+                                        <input type="file" class="form-control" name="category_image">
+                                    </div>
+                                    <div class="mt-3">
+                                    <img src="uploads/category/<?= $category['image'] ?>" alt="" width="100px">
                                     </div>
                                 </div>
                                 <div class="form-group mt-3">
-                                    <label class="form-label">Category Details 
+                                    <label class="form-label">Details 
                                         <span class="text-danger">*</span>
                                     </label>
-                                    <textarea class="form-control" name="content" id="" rows="5" placeholder="Enter Category details "></textarea>
+                                    <textarea class="form-control" name="category_details" id="" rows="5" placeholder="Enter Category details "><?= $category['details'] ?></textarea>
                                 </div>
                                 <div class="mt-3">
-                                    <button type="submit" class="btn btn-primary">Update Category</button>
+                                    <button type="submit" name="update" class="btn btn-primary">Update Category</button>
                                 </div>
                             </form>
                         </div>
